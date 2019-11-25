@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <link rel="shortcut icon" href="assets/images/favicon.ico">
+  <link rel="apple-touch-icon" sizes="57x57" href="assets/images/apple-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="assets/images/apple-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="assets/images/apple-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="assets/images/apple-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="assets/images/apple-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="assets/images/apple-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="assets/images/apple-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="assets/images/apple-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="192x192"  href="assets/images/android-icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="assets/images/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16x16.png">
+  <link rel="manifest" href="assets/images/manifest.json">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+  <title>API Test</title>
+  <link href="static/css/index.css" rel="stylesheet">
+</head>
+
+<body style="width: 500px;">
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+
+  <!--#region Navbar -->
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div>
+      <button type="button" id="refresh" class="btn btn-info"><i class="fas fa-sync-alt"></i> Refresh</button>
+	  <button type="button" id="newcontactlist" class="btn btn-primary"><i class="fas fa-plus"></i> New contact list</button>
+    </div>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+          <a class="nav-link" href="/">Current User</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!--#endregion -->
+
+  <!--#region Current Requests -->
+
+  <div class="container mt-2">
+    <div>
+      <h6 class="text-center">Current User</h6>
+      <hr />
+    </div>
+
+    <div id="cards"></div>
+
+  </div>
+
+  <!--#endregion -->
+
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+  <script src="https://sdk-cdn.mypurecloud.com/javascript/41.0.0/purecloud-platform-client-v2.min.js"></script>
+  <script src="static/js/notifications.js"></script>
+  <script src="static/js/purecloud.js"></script>
+
+  <script>
+
+    // Refresh button
+    $("#refresh").click(() => {
+		$("#cards").empty();
+		loadCards();
+    });
+
+    loadCards();
+	
+	var nameNewContactList = 'testContactListBastien';
+	nbOccurence=2;
+	prenom='Bob';
+	nom='Orange';
+	telephone='+33607616374';
+	
+	$("#newcontactlist").click(() => {
+		getContactListByName(nameNewContactList).then((contactlists) => {
+			if (contactlists.total==0) {
+				// La liste n'existe pas, on la crée
+				createContactList(nameNewContactList).then((list) => {
+					console.log('contact list '+list.id+' created');
+					// On remplit la liste
+					fillMultipleContactListById(list.id,nbOccurence,prenom,nom,telephone).then((contactlist) => {
+						console.log('contact list '+list.id+' filled');
+					}).catch((error) => {
+						console.error(error);
+					});
+					$("#cards").append(createCard('Contact list','',list.id,''));
+				}).catch((error) => {
+					console.error(error);
+				});
+			} else {
+				// La liste existe, on recherche l'id de la liste
+				// On vide la liste en question
+				var contactlistid = contactlists.entities[0].id;
+				emptyContactList(contactlistid).then((list) => {
+					console.log('contact list '+contactlistid+' emptied');
+					// On remplit la liste
+					fillMultipleContactListById(contactlistid,nbOccurence,prenom,nom,telephone).then((contactlist) => {
+						console.log('contact list '+contactlistid+' filled');
+					}).catch((error) => {
+						console.error(error);
+					});
+					$("#cards").append(createCard('Contact list','',contactlistid,''));
+				}).catch((error) => {
+					console.error(error);
+				});
+			}
+		}).catch((error) => {
+			console.error(error);
+		});
+	});
+
+    function loadCards() {
+		// Get user's name
+		getCurrentUser().then((user) => {
+			// Display the card with the user's name
+			$("#cards").append(createCard(user.name,user.presence.presenceDefinition.systemPresence,false,user.email));
+
+			//#endregion
+
+			// Activate bootstrap tooltips
+			//$("[data-toggle='tooltip']").tooltip();
+		}).catch((error) => {
+		  console.error(error);
+		});
+    }
+	
+	function createCard(username,usersystemPresence,message,useremail) {
+		var cardDiv = document.createElement("div")
+		cardDiv.className = "card shadow mt-2";
+		//#region Header
+		var header = document.createElement("h6");
+		header.className = "card-header small";
+		
+		header.classList.add("bg-success");
+		header.classList.add("text-light");
+		
+		header.innerHTML = '<i class="fas fa-refresh" data-toggle="tooltip" data-placement="top" title="Update"></i>';
+		header.innerHTML += username+'<div class="float-right">COMPLETED</div>';
+		cardDiv.append(header);
+		//#endregion
+
+		//#region Body
+		var body = document.createElement("div");
+		body.className = "card-body bg-light";
+
+		var rowDiv = document.createElement("div");
+		rowDiv.className = "row";
+
+		// Name
+		if (username) {
+			var nameSection = document.createElement("h6");
+			nameSection.className = "card-text small mr-1 ml-1";
+			nameSection.innerHTML = '<i class="fas fa-user-circle"></i> '+username;
+			rowDiv.append(nameSection);
+		}
+		
+		// Presence
+		if (usersystemPresence) {
+			var anotherSection = document.createElement("h6");
+			anotherSection.className = "card-text small mr-1 ml-1";
+			anotherSection.innerHTML = '<i class="fas fa-stethoscope"></i> '+usersystemPresence;
+			rowDiv.append(anotherSection);
+		}
+		
+		// Message annexe
+		if (message) {
+			var anotherSection = document.createElement("h6");
+			anotherSection.className = "card-text small mr-1 ml-1";
+			anotherSection.innerHTML = '<i class="fas fa-sticky-note-o"></i> '+message;
+			rowDiv.append(anotherSection);
+		}
+
+		body.append(rowDiv);
+		cardDiv.append(body);
+		//#endregion
+		
+		//#region Footer
+		var footer = document.createElement("div");
+		footer.className = "row no-gutters bg-light";
+
+		var col = document.createElement("div");
+		col.className = "col";
+
+		var leftPart = document.createElement("div");
+		leftPart.className = "float-left text-secondary small ml-1";
+		
+		var userIdSection = document.createElement("small");
+		userIdSection.setAttribute("id", "userId");
+		userIdSection.setAttribute("data-toggle", "tooltip");
+		userIdSection.setAttribute("data-placement", "top");
+		userIdSection.setAttribute("title", "User Id");
+		userIdSection.innerHTML = '<i class="fas fa-id-card"></i> '+useremail;
+		leftPart.append(userIdSection);
+		
+		col.append(leftPart);
+		
+		// Created By
+		var rightPart = document.createElement("div");
+		rightPart.className = "float-right text-secondary small";
+		var createdBySection = document.createElement("h6");
+		createdBySection.className = "small mr-2";
+		createdBySection.innerHTML = username;
+		rightPart.append(createdBySection);
+		col.append(rightPart);
+		footer.append(col);
+		cardDiv.append(footer);
+		return cardDiv;
+	}
+
+  </script>
+</body>
+
+</html>
